@@ -598,7 +598,9 @@ def main() -> int:
         return 2
 
     torch.save(best["state"], args.out)
-    print(f"\nsaved checkpoint: {args.out}  (best epoch {best['epoch']}, "
+    npz_out = os.path.splitext(args.out)[0] + ".npz"
+    np.savez(npz_out, **{k: v.cpu().numpy() for k, v in best["state"].items()})
+    print(f"\nsaved checkpoints: {args.out} and {npz_out}  (best epoch {best['epoch']}, "
           f"holdout MSE {best['loss']:.5f})")
     open_meteo_provider.close()
     return 0

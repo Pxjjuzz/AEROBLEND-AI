@@ -7,8 +7,15 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
-import torch
-import torch.nn as nn
+
+try:
+    import torch
+    import torch.nn as nn
+    _HAS_TORCH = True
+except ImportError:
+    torch = None
+    nn = None
+    _HAS_TORCH = False
 
 from app.core.config import MODEL_KEYS, settings
 from app.core.logging import get_logger
@@ -33,52 +40,73 @@ class WeightResult:
         return max(self.available, key=lambda k: self.weights[k])
 
 
-class AdaptiveGatingNetwork(nn.Module):
-    """Maps a 19-dim atmospheric feature vector to a weight per model.
+if _HAS_TORCH:
+    class AdaptiveGatingNetwork(nn.Module):
+        """Maps a 19-dim atmospheric feature vector to a weight per model.
 
-    Output order is the order of ``MODEL_REGISTRY`` in core.config.
-    """
+        Output order is the order of ``MODEL_REGISTRY`` in core.config.
+        """
 
-    def __init__(self, input_dim: int = FEATURE_DIM, num_models: int = len(MODEL_KEYS)):
-        super().__init__()
-        self.input_dim = input_dim
-        self.num_models = num_models
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, 64),
-            nn.LayerNorm(64),
-            nn.GELU(),
-            nn.Linear(64, 32),
-            nn.GELU(),
-            nn.Linear(32, 16),
-            nn.GELU(),
-            nn.Linear(16, num_models),
-        )
-        self.softmax = nn.Softmax(dim=-1)
+        def __init__(self, input_dim: int = FEATURE_DIM, num_models: int = len(MODEL_KEYS)):
+            super().__init__()
+            self.input_dim = input_dim
+            self.num_models = num_models
+            self.net = nn.Sequential(
+                nn.Linear(input_dim, 64),
+                nn.LayerNorm(64),
+                nn.GELU(),
+                nn.Linear(64, 32),
+                nn.GELU(),
+                nn.Linear(32, 16),
+                nn.GELU(),
+                nn.Linear(16, num_models),
+            )
+            self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.softmax(self.net(x))
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            return self.softmax(self.net(x))
+else:
+    class AdaptiveGatingNetwork:  # type: ignore[no-redef]
+        def __init__(self, *args, **kwargs):
+            pass
 
 
 def _seed_everything(seed: int = 42) -> None:
-    """Seed torch and numpy.
-
-    Without this the checkpoint written at Docker build time differed on every
-    rebuild, so the deployed artefact was not reproducible.
-    """
+    """Seed torch and numpy."""
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if _HAS_TORCH:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+
+def _gelu_np(x: np.ndarray) -> np.ndarray:
+    erf_vec = np.vectorize(math.erf)
+    return 0.5 * x * (1.0 + erf_vec(x / math.sqrt(2.0)))
+
+
+def _layer_norm_np(x: np.ndarray, weight: np.ndarray, bias: np.ndarray, eps: float = 1e-5) -> np.ndarray:
+    mean = np.mean(x, axis=-1, keepdims=True)
+    var = np.var(x, axis=-1, keepdims=True)
+    return ((x - mean) / np.sqrt(var + eps)) * weight + bias
+
+
+def _forward_numpy(x: np.ndarray, w: Dict[str, np.ndarray]) -> np.ndarray:
+    h = np.dot(x, w["net.0.weight"].T) + w["net.0.bias"]
+    h = _layer_norm_np(h, w["net.1.weight"], w["net.1.bias"])
+    h = _gelu_np(h)
+    h = np.dot(h, w["net.3.weight"].T) + w["net.3.bias"]
+    h = _gelu_np(h)
+    h = np.dot(h, w["net.5.weight"].T) + w["net.5.bias"]
+    h = _gelu_np(h)
+    h = np.dot(h, w["net.7.weight"].T) + w["net.7.bias"]
+    exp_h = np.exp(h - np.max(h))
+    return exp_h / np.sum(exp_h)
 
 
 def _largest_remainder_round(weights: Dict[str, float], keys: Sequence[str], places: int = 4) -> Dict[str, float]:
-    """Round to a fixed number of places while preserving the exact sum.
-
-    The previous implementation forced the entire residual onto whichever model
-    happened to be last in the list (always DWD_ICON), biasing that model on
-    100% of samples. Largest-remainder apportionment spreads the correction
-    across all contributing models instead.
-    """
+    """Round to a fixed number of places while preserving the exact sum."""
     factor = 10 ** places
     exact = {k: weights[k] * factor for k in keys}
     floors = {k: math.floor(v) for k, v in exact.items()}
@@ -92,11 +120,11 @@ def _largest_remainder_round(weights: Dict[str, float], keys: Sequence[str], pla
 class GatingModelManager:
     def __init__(self) -> None:
         self.model_path = str(settings.MODEL_WEIGHTS_PATH)
-        self.device = torch.device(settings.ML_DEVICE)
+        self.npz_path = str(settings.MODEL_WEIGHTS_PATH).replace(".pt", ".npz")
+        self.device = torch.device(settings.ML_DEVICE) if _HAS_TORCH else "cpu"
         _seed_everything()
-        self.model = AdaptiveGatingNetwork()
-        self.model.to(self.device)
-        self.model.eval()
+        self.numpy_weights: Optional[Dict[str, np.ndarray]] = None
+        self.model = AdaptiveGatingNetwork() if _HAS_TORCH else None
         self.status = "NOT_TRAINED"
         self.model_names = list(MODEL_KEYS)
         self.notes: List[str] = []
@@ -105,24 +133,43 @@ class GatingModelManager:
 
     # -- Checkpoint ----------------------------------------------------------
 
+    def _resolve_checkpoint_path(self) -> Optional[str]:
+        for candidate in (self.npz_path, self.model_path):
+            if candidate and os.path.exists(candidate):
+                return candidate
+        return None
+
     def load_model(self) -> bool:
-        if not os.path.exists(self.model_path):
+        path = self._resolve_checkpoint_path()
+        if not path:
             self.status = "NOT_TRAINED"
             self.notes = ["no checkpoint found; using documented physical prior"]
             self._loaded_mtime = None
             return False
+
         try:
-            # weights_only=True: the checkpoint is untrusted input. Without it
-            # torch.load can execute arbitrary code.
-            state_dict = torch.load(
-                self.model_path, map_location=self.device, weights_only=True
-            )
-            self.model.load_state_dict(state_dict)
-            self.model.eval()
-            self.status = "TRAINED"
-            self.notes = []
-            self._loaded_mtime = os.path.getmtime(self.model_path)
-            return True
+            if path.endswith(".npz"):
+                data = np.load(path)
+                self.numpy_weights = {k: data[k] for k in data.files}
+                self.status = "TRAINED"
+                self.notes = []
+                self._loaded_mtime = os.path.getmtime(path)
+                return True
+            elif _HAS_TORCH and self.model is not None:
+                state_dict = torch.load(
+                    path, map_location=self.device, weights_only=True
+                )
+                self.model.load_state_dict(state_dict)
+                self.model.eval()
+                self.numpy_weights = {k: v.cpu().numpy() for k, v in state_dict.items()}
+                self.status = "TRAINED"
+                self.notes = []
+                self._loaded_mtime = os.path.getmtime(path)
+                return True
+            else:
+                self.status = "NOT_TRAINED"
+                self.notes = ["unsupported checkpoint format without PyTorch"]
+                return False
         except Exception as exc:
             self.status = "ERROR"
             self.notes = [f"checkpoint load failed: {exc}"]
@@ -131,16 +178,16 @@ class GatingModelManager:
             return False
 
     def reload_if_changed(self) -> None:
-        """Reload only when the checkpoint mtime changed.
-
-        The old code re-read the checkpoint on every single request.
-        """
-        try:
-            mtime = os.path.getmtime(self.model_path)
-        except OSError:
+        """Reload only when the checkpoint mtime changed."""
+        path = self._resolve_checkpoint_path()
+        if not path:
             if self.status == "TRAINED":
                 self.status = "NOT_TRAINED"
                 self.notes = ["checkpoint disappeared; using physical prior"]
+            return
+        try:
+            mtime = os.path.getmtime(path)
+        except OSError:
             return
         if mtime != getattr(self, "_loaded_mtime", None):
             self.load_model()
@@ -149,12 +196,7 @@ class GatingModelManager:
     # -- Weights -------------------------------------------------------------
 
     def _physical_prior(self, lead_time_hours: float) -> List[float]:
-        """Documented climatological prior, used only when untrained.
-
-        Ordered [ECMWF_IFS, ECMWF_AIFS, NOAA_GFS, DWD_ICON]. The neural model
-        is favoured at short lead time; the longer-horizon NWP cores take over
-        beyond 48 h.
-        """
+        """Documented climatological prior, used only when untrained."""
         if lead_time_hours <= 12:
             return [0.22, 0.48, 0.15, 0.15]
         if lead_time_hours <= 24:
@@ -164,9 +206,13 @@ class GatingModelManager:
         return [0.32, 0.20, 0.28, 0.20]
 
     def _forward(self, feature_vector: np.ndarray) -> np.ndarray:
-        with torch.no_grad():
-            inp = torch.as_tensor(feature_vector, dtype=torch.float32, device=self.device)
-            return self.model(inp.unsqueeze(0)).squeeze(0).cpu().numpy()
+        if self.numpy_weights is not None:
+            return _forward_numpy(feature_vector, self.numpy_weights)
+        if _HAS_TORCH and self.model is not None:
+            with torch.no_grad():
+                inp = torch.as_tensor(feature_vector, dtype=torch.float32, device=self.device)
+                return self.model(inp.unsqueeze(0)).squeeze(0).cpu().numpy()
+        raise RuntimeError("No model weights available for forward pass")
 
     def predict(
         self,
@@ -174,17 +220,7 @@ class GatingModelManager:
         lead_time_hours: float = 24.0,
         available_models: Optional[Sequence[str]] = None,
     ) -> WeightResult:
-        """Return weights summing to exactly 1.0 over the available models.
-
-        ``available_models`` is the set of models that actually carry data for
-        this step. Weights for unavailable models are masked to 0.0 and the
-        remainder is redistributed proportionally across the available models.
-
-        Masking is essential: Open-Meteo currently serves an all-null payload
-        for ecmwf_aifs025, and the previous code silently retained its weight in
-        the normalisation denominator, which biased every blended variable low
-        by roughly that model's share.
-        """
+        """Return weights summing to exactly 1.0 over the available models."""
         available = [k for k in self.model_names if k in set(available_models or self.model_names)]
         notes: List[str] = []
 
@@ -210,8 +246,7 @@ class GatingModelManager:
         total = masked.sum()
 
         if total <= 0.0:
-            # Degenerate network output: fall back to an equal split so the
-            # sum invariant still holds rather than dividing by zero.
+            # Degenerate network output: fall back to an equal split
             masked = np.ones(len(available), dtype=np.float64)
             total = masked.sum()
             notes.append("degenerate gating output; used equal weights")
@@ -241,14 +276,7 @@ class GatingModelManager:
     def sensitivity(
         self, feature_vector: np.ndarray, lead_time_hours: float = 24.0
     ) -> List[Dict[str, float]]:
-        """Measured per-feature influence on the weight vector.
-
-        Each feature is perturbed by +/- one standard deviation of its observed
-        cross-model spread (or a documented default when the input is constant)
-        and the resulting change in the total-variation distance of the weight
-        vector is recorded. These are measured sensitivities, not asserted
-        scores, and they work for the physical prior as well as a trained net.
-        """
+        """Measured per-feature influence on the weight vector."""
         base = self.predict(feature_vector, lead_time_hours).weights
         base_vec = np.array([base[k] for k in self.model_names])
         out: List[Dict[str, float]] = []
@@ -282,4 +310,3 @@ class GatingModelManager:
 
 
 gating_manager = GatingModelManager()
-
