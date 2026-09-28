@@ -1,18 +1,18 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 import numpy as np
-from backend.app.providers.open_meteo import open_meteo_provider
-from backend.app.features.engineer import feature_engineer
-from backend.app.regimes.classifier import regime_classifier
-from backend.app.disagreement.calculator import disagreement_calculator
-from backend.app.blending.gating_network import gating_manager
-from backend.app.blending.engine import blending_engine
-from backend.app.extremes.detector import extreme_detector
-from backend.app.verification.evaluator import verification_evaluator
-from backend.app.schemas.weather import ForecastPoint, WeatherRegime
+from app.providers.open_meteo import open_meteo_provider
+from app.features.engineer import feature_engineer
+from app.regimes.classifier import regime_classifier
+from app.disagreement.calculator import disagreement_calculator
+from app.blending.gating_network import gating_manager
+from app.blending.engine import blending_engine
+from app.extremes.detector import extreme_detector
+from app.verification.evaluator import verification_evaluator
+from app.schemas.weather import ForecastPoint, WeatherRegime
 
 def test_uv_wind_calculation():
     # Wind from North (0 deg) blowing south: u = 0, v = -speed

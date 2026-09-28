@@ -1,10 +1,10 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 import asyncio
-from backend.app.services.forecast_service import forecast_service
+from app.services.forecast_service import forecast_service
 
 def test_real_blended_forecast_pipeline():
     async def _run():

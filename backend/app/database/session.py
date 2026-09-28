@@ -39,6 +39,9 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+_db_initialized = False
+
+
 async def get_db() -> AsyncIterator[AsyncSession]:
     """Request-scoped session with guaranteed rollback on failure.
 
@@ -46,6 +49,13 @@ async def get_db() -> AsyncIterator[AsyncSession]:
     leave uncommitted state in the session and the next use in the same
     connection would observe it.
     """
+    global _db_initialized
+    if not _db_initialized:
+        try:
+            await init_db()
+        except Exception as exc:
+            logger.warning("lazy init_db fallback warning", extra={"context": {"error": str(exc)}})
+
     session = AsyncSessionLocal()
     try:
         yield session
@@ -72,6 +82,7 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(_add_missing_columns)
+    _db_initialized = True
     logger.info("database schema ensured", extra={"context": {"backend": engine.dialect.name}})
 
 

@@ -51,18 +51,18 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from backend.app.blending.gating_network import (  # noqa: E402
+from app.blending.gating_network import (  # noqa: E402
     AdaptiveGatingNetwork,
     _seed_everything,
 )
-from backend.app.core.config import KEY_TO_SPEC, MODEL_KEYS, settings  # noqa: E402
-from backend.app.core.logging import get_logger  # noqa: E402
-from backend.app.features.spec import FEATURE_DIM, build_vector  # noqa: E402
-from backend.app.features.engineer import dew_point_from  # noqa: E402
-from backend.app.regimes.classifier import regime_classifier  # noqa: E402
-from backend.app.providers.open_meteo import open_meteo_provider  # noqa: E402
+from app.core.config import KEY_TO_SPEC, MODEL_KEYS, settings  # noqa: E402
+from app.core.logging import get_logger  # noqa: E402
+from app.features.spec import FEATURE_DIM, build_vector  # noqa: E402
+from app.features.engineer import dew_point_from  # noqa: E402
+from app.regimes.classifier import regime_classifier  # noqa: E402
+from app.providers.open_meteo import open_meteo_provider  # noqa: E402
 
 logger = get_logger(__name__)
 
