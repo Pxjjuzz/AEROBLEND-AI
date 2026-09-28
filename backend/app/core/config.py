@@ -1,15 +1,25 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import List, Literal
 
 from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Absolute project root. Previously every default path was CWD-relative, so
-# launching uvicorn from any directory other than the repo root silently lost
-# .env, the SQLite file and the model checkpoint.
-BASE_DIR = Path(__file__).resolve().parents[3]
+# backend/app/core/config.py -> backend/ (local) or /var/task (Vercel service root)
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+_REPO_ROOT = BACKEND_DIR.parent
+# Local checkout has frontend/ beside backend/. Vercel packages only backend/.
+BASE_DIR = _REPO_ROOT if (_REPO_ROOT / "frontend").is_dir() else BACKEND_DIR
+_ON_VERCEL = bool(os.environ.get("VERCEL"))
+
+
+def _default_database_url() -> str:
+    if _ON_VERCEL:
+        # The serverless filesystem is read-only except /tmp.
+        return "sqlite+aiosqlite:////tmp/aeroblend.db"
+    return f"sqlite+aiosqlite:///{BACKEND_DIR / 'data' / 'aeroblend.db'}"
 
 
 class ModelSpec(BaseModel):
@@ -80,7 +90,7 @@ KEY_TO_SPEC: dict[str, ModelSpec] = {m.key: m for m in MODEL_REGISTRY}
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(BASE_DIR / ".env"),
+        env_file=(BASE_DIR / ".env", BACKEND_DIR / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",
@@ -88,13 +98,14 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "AeroBlend AI"
     VERSION: str = "5.0.0"
-    API_V1_STR: str = "/api"
+    # Vercel Services forwards the public path. Local Swagger stays at /api.
+    API_V1_STR: str = "/svc/api" if _ON_VERCEL else "/api"
 
     APP_ENV: Literal["development", "staging", "production", "test"] = "development"
     DEBUG: bool = True
 
     # --- Database -----------------------------------------------------------
-    DATABASE_URL: str = f"sqlite+aiosqlite:///{BASE_DIR / 'backend' / 'data' / 'aeroblend.db'}"
+    DATABASE_URL: str = _default_database_url()
 
     # --- External services --------------------------------------------------
     OPEN_METEO_BASE_URL: str = "https://api.open-meteo.com/v1"
@@ -111,7 +122,7 @@ class Settings(BaseSettings):
     ARCHIVE_CACHE_TTL: int = 86400
 
     # --- ML / blending ------------------------------------------------------
-    MODEL_WEIGHTS_PATH: Path = BASE_DIR / "backend" / "data" / "gating_network.pt"
+    MODEL_WEIGHTS_PATH: Path = BACKEND_DIR / "data" / "gating_network.pt"
     GATING_INPUT_DIM: int = 19
     # Device is pinned to CPU. Silently falling back to CPU is fine; silently
     # claiming a GPU that is not present is not.

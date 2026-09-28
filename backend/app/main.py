@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -169,7 +170,10 @@ app.include_router(weather_router, prefix=settings.API_V1_STR)
 app.include_router(forecast_router, prefix=settings.API_V1_STR)
 app.include_router(intelligence_router, prefix=settings.API_V1_STR)
 app.include_router(verification_router, prefix=settings.API_V1_STR)
-app.include_router(health_router)
+# Local health lives at /health. The production frontend calls /svc/api/health/*.
+app.include_router(
+    health_router, prefix="/svc/api" if os.environ.get("VERCEL") else ""
+)
 
 
 @app.websocket("/ws/forecast")
