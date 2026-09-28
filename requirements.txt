@@ -1,0 +1,14 @@
+fastapi==0.133.1
+uvicorn==0.41.0
+pydantic==2.13.4
+pydantic-settings==2.13.1
+sqlalchemy==2.0.52
+aiosqlite==0.22.1
+asyncpg==0.31.0
+httpx==0.28.1
+numpy==2.4.6
+pandas==3.0.5
+scikit-learn==1.9.0
+scipy==1.17.1
+websockets==15.0.1
+pytest==9.1.1

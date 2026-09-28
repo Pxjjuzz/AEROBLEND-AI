@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  database:
+    image: timescale/timescaledb:latest-pg15
+    container_name: aeroblend-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aeroblend
+      POSTGRES_PASSWORD: aeroblend_secure_password
+      POSTGRES_DB: aeroblend_weather
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aeroblend -d aeroblend_weather"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: aeroblend-backend
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://aeroblend:aeroblend_secure_password@database:5432/aeroblend_weather
+      - OPEN_METEO_BASE_URL=https://api.open-meteo.com/v1
+      - OPEN_METEO_ARCHIVE_URL=https://archive-api.open-meteo.com/v1
+      - APP_ENV=production
+      - DEBUG=false
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: aeroblend-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_HEALTH_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
