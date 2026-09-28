@@ -4,8 +4,8 @@ import math
 from datetime import datetime, timezone
 from typing import Dict, Optional
 
-from backend.app.core.config import settings
-from backend.app.schemas.weather import WeatherRegime
+from app.core.config import settings
+from app.schemas.weather import WeatherRegime
 
 # IMD daily rainfall categories (mm/24h) live in settings
 # (EXTREME_RAIN_HEAVY_MM_24H / EXTREME_RAIN_VERY_HEAVY_MM_24H) so there is one
@@ -186,3 +186,4 @@ def _confidence(margin: float, *, floor: float, ceiling: float) -> float:
 
 
 regime_classifier = RegimeClassifier()
+

@@ -13,18 +13,18 @@ from sqlalchemy import select
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp
 
-from backend.app.api.forecast import router as forecast_router
-from backend.app.api.health import router as health_router
-from backend.app.api.intelligence import router as intelligence_router
-from backend.app.api.verification import router as verification_router
-from backend.app.api.weather import router as weather_router
-from backend.app.blending.gating_network import gating_manager
-from backend.app.core.config import settings
-from backend.app.core.logging import get_logger
-from backend.app.database.models import Location
-from backend.app.database.session import AsyncSessionLocal, dispose_db, init_db
-from backend.app.providers.open_meteo import open_meteo_provider
-from backend.app.websocket.manager import websocket_manager
+from app.api.forecast import router as forecast_router
+from app.api.health import router as health_router
+from app.api.intelligence import router as intelligence_router
+from app.api.verification import router as verification_router
+from app.api.weather import router as weather_router
+from app.blending.gating_network import gating_manager
+from app.core.config import settings
+from app.core.logging import get_logger
+from app.database.models import Location
+from app.database.session import AsyncSessionLocal, dispose_db, init_db
+from app.providers.open_meteo import open_meteo_provider
+from app.websocket.manager import websocket_manager
 
 logger = get_logger(__name__)
 
@@ -213,4 +213,5 @@ async def websocket_forecast_endpoint(websocket: WebSocket) -> None:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+

@@ -5,8 +5,8 @@ from typing import List, Optional, Sequence
 
 import numpy as np
 
-from backend.app.core.config import settings
-from backend.app.schemas.weather import ModelDisagreement
+from app.core.config import settings
+from app.schemas.weather import ModelDisagreement
 
 
 class DisagreementCalculator:
@@ -106,3 +106,4 @@ class DisagreementCalculator:
 
 
 disagreement_calculator = DisagreementCalculator()
+

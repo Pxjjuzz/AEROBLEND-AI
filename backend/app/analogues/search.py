@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from backend.app.core.config import settings
-from backend.app.core.logging import get_logger
-from backend.app.providers.open_meteo import open_meteo_provider
-from backend.app.schemas.weather import AnalogueSearchResult, HistoricalAnalogueMatch
+from app.core.config import settings
+from app.core.logging import get_logger
+from app.providers.open_meteo import open_meteo_provider
+from app.schemas.weather import AnalogueSearchResult, HistoricalAnalogueMatch
 
 logger = get_logger(__name__)
 
@@ -255,3 +255,4 @@ class HistoricalAnalogueSearch:
 
 
 analogue_search = HistoricalAnalogueSearch()
+

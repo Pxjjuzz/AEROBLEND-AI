@@ -9,8 +9,8 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
-from backend.app.core.config import settings
-from backend.app.core.logging import get_logger
+from app.core.config import settings
+from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -136,3 +136,4 @@ def _add_column_ddl(table_name: str, column, dialect) -> Optional[str]:
 
 async def dispose_db() -> None:
     await engine.dispose()
+

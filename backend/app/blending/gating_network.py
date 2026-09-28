@@ -10,9 +10,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from backend.app.core.config import MODEL_KEYS, settings
-from backend.app.core.logging import get_logger
-from backend.app.features.spec import FEATURE_DIM, FEATURE_NAMES
+from app.core.config import MODEL_KEYS, settings
+from app.core.logging import get_logger
+from app.features.spec import FEATURE_DIM, FEATURE_NAMES
 
 logger = get_logger(__name__)
 
@@ -282,3 +282,4 @@ class GatingModelManager:
 
 
 gating_manager = GatingModelManager()
+

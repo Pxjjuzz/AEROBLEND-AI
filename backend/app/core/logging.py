@@ -4,7 +4,7 @@ import logging
 import sys
 from typing import Any
 
-from backend.app.core.config import settings
+from app.core.config import settings
 
 _CONFIGURED = False
 
@@ -67,3 +67,4 @@ def get_logger(name: str) -> logging.Logger:
 
 def log_event(logger: logging.Logger, level: int, msg: str, **context: Any) -> None:
     logger.log(level, msg, extra={"context": context})
+

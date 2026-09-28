@@ -4,9 +4,9 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from backend.app.core.config import settings
-from backend.app.core.logging import get_logger
-from backend.app.schemas.weather import BlendedForecastPoint, ExtremeEvent
+from app.core.config import settings
+from app.core.logging import get_logger
+from app.schemas.weather import BlendedForecastPoint, ExtremeEvent
 
 logger = get_logger(__name__)
 
@@ -216,3 +216,4 @@ def _hours_at_or_above(
 
 
 extreme_detector = ExtremeWeatherDetector()
+

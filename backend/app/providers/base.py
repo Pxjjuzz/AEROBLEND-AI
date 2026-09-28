@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
-from backend.app.schemas.weather import ForecastPoint, ProviderHealth
+from app.schemas.weather import ForecastPoint, ProviderHealth
 
 
 class ProviderError(RuntimeError):
@@ -84,3 +84,4 @@ class TTLCache:
     @property
     def size(self) -> int:
         return len(self._data)
+

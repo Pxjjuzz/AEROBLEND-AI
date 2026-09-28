@@ -6,9 +6,9 @@ from typing import Optional, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.core.logging import get_logger
-from backend.app.database.models import Location
-from backend.app.schemas.weather import LocationInfo
+from app.core.logging import get_logger
+from app.database.models import Location
+from app.schemas.weather import LocationInfo
 
 logger = get_logger(__name__)
 
@@ -132,3 +132,4 @@ class LocationResolver:
 
 
 location_resolver = LocationResolver()
+

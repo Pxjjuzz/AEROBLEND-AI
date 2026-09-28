@@ -14,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from backend.app.database.session import Base
+from app.database.session import Base
 
 
 class Location(Base):
@@ -198,3 +198,4 @@ class TrainingRun(Base):
     best_epoch = Column(Integer, nullable=True)
     model_path = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
+

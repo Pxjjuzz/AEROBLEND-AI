@@ -6,10 +6,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from backend.app.blending.gating_network import WeightResult, gating_manager
-from backend.app.core.config import MODEL_KEYS
-from backend.app.features.engineer import dew_point_from, feature_engineer
-from backend.app.schemas.weather import (
+from app.blending.gating_network import WeightResult, gating_manager
+from app.core.config import MODEL_KEYS
+from app.features.engineer import dew_point_from, feature_engineer
+from app.schemas.weather import (
     BlendedForecastPoint,
     ForecastPoint,
     ModelWeight,
@@ -361,3 +361,4 @@ class BlendingEngine:
 
 
 blending_engine = BlendingEngine()
+

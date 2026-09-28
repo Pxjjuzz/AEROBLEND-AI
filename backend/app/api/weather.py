@@ -6,11 +6,11 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.core.config import MODEL_KEYS, MODEL_REGISTRY, KEY_TO_SPEC, settings
-from backend.app.database.session import get_db
-from backend.app.providers.open_meteo import open_meteo_provider
-from backend.app.schemas.weather import BlendedForecastResponse
-from backend.app.services.forecast_service import forecast_service
+from app.core.config import MODEL_KEYS, MODEL_REGISTRY, KEY_TO_SPEC, settings
+from app.database.session import get_db
+from app.providers.open_meteo import open_meteo_provider
+from app.schemas.weather import BlendedForecastResponse
+from app.services.forecast_service import forecast_service
 
 router = APIRouter(prefix="/weather", tags=["Weather"])
 
@@ -130,3 +130,4 @@ async def get_model_runs() -> Dict[str, Any]:
         "generatedAt": now.isoformat().replace("+00:00", "Z"),
         "runs": runs,
     }
+

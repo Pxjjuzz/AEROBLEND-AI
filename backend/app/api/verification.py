@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from backend.app.core.config import settings
-from backend.app.verification.evaluator import verification_evaluator
+from app.core.config import settings
+from app.verification.evaluator import verification_evaluator
 
 router = APIRouter(prefix="/verification", tags=["Verification"])
 
@@ -65,3 +65,4 @@ async def trigger_verification_run(
         "referenceDataset": report.referenceDataset,
         "report": report,
     }
+

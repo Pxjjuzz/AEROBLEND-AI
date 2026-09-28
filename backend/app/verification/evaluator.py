@@ -6,10 +6,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from backend.app.core.config import KEY_TO_SPEC, MODEL_KEYS, settings
-from backend.app.core.logging import get_logger
-from backend.app.providers.open_meteo import open_meteo_provider
-from backend.app.schemas.weather import (
+from app.core.config import KEY_TO_SPEC, MODEL_KEYS, settings
+from app.core.logging import get_logger
+from app.providers.open_meteo import open_meteo_provider
+from app.schemas.weather import (
     LeadTimeBin,
     VerificationMetric,
     VerificationReport,
@@ -399,3 +399,4 @@ class VerificationEvaluator:
 
 
 verification_evaluator = VerificationEvaluator()
+

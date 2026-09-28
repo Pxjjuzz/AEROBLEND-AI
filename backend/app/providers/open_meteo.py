@@ -9,10 +9,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
-from backend.app.core.config import KEY_TO_SPEC, MODEL_KEYS, settings
-from backend.app.core.logging import get_logger
-from backend.app.providers.base import ProviderError, TTLCache, WeatherProvider
-from backend.app.schemas.weather import ForecastPoint, ProviderHealth
+from app.core.config import KEY_TO_SPEC, MODEL_KEYS, settings
+from app.core.logging import get_logger
+from app.providers.base import ProviderError, TTLCache, WeatherProvider
+from app.schemas.weather import ForecastPoint, ProviderHealth
 
 logger = get_logger(__name__)
 
@@ -457,3 +457,4 @@ def _f(value: Any) -> Optional[float]:
 
 
 open_meteo_provider = OpenMeteoProvider()
+

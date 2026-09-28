@@ -255,3 +255,4 @@ class ModelRunInfo(BaseModel):
     status: str
     leadHorizonHours: Optional[int] = None
     available: bool = True
+

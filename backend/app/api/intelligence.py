@@ -4,10 +4,10 @@ from typing import Optional
 
 from fastapi import APIRouter, Query, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.app.core.config import settings
-from backend.app.services.forecast_service import forecast_service
-from backend.app.analogues.search import analogue_search
-from backend.app.database.session import get_db
+from app.core.config import settings
+from app.services.forecast_service import forecast_service
+from app.analogues.search import analogue_search
+from app.database.session import get_db
 
 router = APIRouter(tags=["Intelligence"])
 
@@ -131,3 +131,4 @@ async def get_historical_analogues(
         **resolved,
     )
     return {**result.model_dump(mode="json"), "queryState": resolved}
+

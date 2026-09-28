@@ -6,11 +6,11 @@ from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.blending.engine import blending_engine
-from backend.app.blending.gating_network import gating_manager
-from backend.app.core.config import MODEL_KEYS, settings
-from backend.app.core.logging import get_logger
-from backend.app.database.models import (
+from app.blending.engine import blending_engine
+from app.blending.gating_network import gating_manager
+from app.core.config import MODEL_KEYS, settings
+from app.core.logging import get_logger
+from app.database.models import (
     BlendedForecast,
     DisagreementRecord,
     ExtremeEventRecord,
@@ -19,19 +19,19 @@ from backend.app.database.models import (
     ModelWeightEntity,
     WeatherRegimeRecord,
 )
-from backend.app.disagreement.calculator import disagreement_calculator
-from backend.app.explainability.explainer import explainability_engine
-from backend.app.extremes.detector import extreme_detector
-from backend.app.providers.base import ProviderError
-from backend.app.providers.open_meteo import open_meteo_provider
-from backend.app.regimes.classifier import regime_classifier
-from backend.app.schemas.weather import (
+from app.disagreement.calculator import disagreement_calculator
+from app.explainability.explainer import explainability_engine
+from app.extremes.detector import extreme_detector
+from app.providers.base import ProviderError
+from app.providers.open_meteo import open_meteo_provider
+from app.regimes.classifier import regime_classifier
+from app.schemas.weather import (
     BlendedForecastPoint,
     BlendedForecastResponse,
     ModelDisagreement,
     WeatherRegime,
 )
-from backend.app.services.location_service import location_resolver
+from app.services.location_service import location_resolver
 
 logger = get_logger(__name__)
 
@@ -291,7 +291,7 @@ class ForecastService:
 
     def _vector_for(self, step, latitude, longitude, elevation, regime):
         """Kept for callers that hold a step without its retained vector."""
-        from backend.app.features.engineer import feature_engineer
+        from app.features.engineer import feature_engineer
 
         return feature_engineer.extract_features(
             latitude=latitude,
@@ -321,7 +321,7 @@ class ForecastService:
         detail: str,
     ) -> BlendedForecastResponse:
         """A truthful empty response. Never invents weather values."""
-        from backend.app.schemas.weather import (
+        from app.schemas.weather import (
             ExplainabilityReport,
             LocationInfo,
             ModelDisagreement,
@@ -521,3 +521,4 @@ class ForecastService:
 
 
 forecast_service = ForecastService()
+

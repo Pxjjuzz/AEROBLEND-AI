@@ -6,10 +6,10 @@ from fastapi import APIRouter, Body, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.core.config import settings
-from backend.app.database.session import get_db
-from backend.app.schemas.weather import BlendedForecastResponse, ModelDisagreement
-from backend.app.services.forecast_service import forecast_service
+from app.core.config import settings
+from app.database.session import get_db
+from app.schemas.weather import BlendedForecastResponse, ModelDisagreement
+from app.services.forecast_service import forecast_service
 
 router = APIRouter(prefix="/forecast", tags=["Forecast"])
 
@@ -111,3 +111,4 @@ async def get_model_disagreement(
         db=db,
     )
     return resp.disagreement
+

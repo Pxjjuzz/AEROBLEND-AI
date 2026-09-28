@@ -8,11 +8,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.blending.gating_network import gating_manager
-from backend.app.core.config import settings
-from backend.app.core.logging import get_logger
-from backend.app.database.session import get_db
-from backend.app.providers.open_meteo import open_meteo_provider
+from app.blending.gating_network import gating_manager
+from app.core.config import settings
+from app.core.logging import get_logger
+from app.database.session import get_db
+from app.providers.open_meteo import open_meteo_provider
 
 logger = get_logger(__name__)
 
@@ -75,3 +75,4 @@ async def ml_model_health() -> Dict[str, Any]:
         "inputDimensions": settings.GATING_INPUT_DIM,
         "notes": gating_manager.notes,
     }
+

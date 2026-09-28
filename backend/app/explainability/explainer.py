@@ -4,10 +4,10 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from backend.app.blending.gating_network import gating_manager
-from backend.app.core.logging import get_logger
-from backend.app.features.spec import FEATURE_NAMES
-from backend.app.schemas.weather import (
+from app.blending.gating_network import gating_manager
+from app.core.logging import get_logger
+from app.features.spec import FEATURE_NAMES
+from app.schemas.weather import (
     ExplainabilityAttribution,
     ExplainabilityReport,
     ModelDisagreement,
@@ -212,3 +212,4 @@ class ExplainabilityEngine:
 
 
 explainability_engine = ExplainabilityEngine()
+

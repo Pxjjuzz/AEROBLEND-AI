@@ -109,3 +109,4 @@ def build_vector(raw: dict) -> np.ndarray:
     if missing:
         raise KeyError(f"missing raw features: {missing}")
     return np.array([scale(name, raw[name]) for name in FEATURE_NAMES], dtype=np.float32)
+

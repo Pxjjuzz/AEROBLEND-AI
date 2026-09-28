@@ -6,7 +6,7 @@ from typing import Dict, List, Mapping, Optional
 
 import numpy as np
 
-from backend.app.features.spec import FEATURE_NAMES, REGIME_FLAGS, build_vector
+from app.features.spec import FEATURE_NAMES, REGIME_FLAGS, build_vector
 
 
 def _dew_point_approx(temp_c: float, rh_pct: float) -> float:
@@ -114,3 +114,4 @@ class FeatureEngineer:
 
 
 feature_engineer = FeatureEngineer()
+
