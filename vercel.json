@@ -6,12 +6,13 @@
     },
     "backend": {
       "root": "backend/",
-      "entrypoint": "app.main:app"
+      "entrypoint": "app.main:app",
+      "framework": "fastapi"
     }
   },
   "rewrites": [
     {
-      "source": "/api/:path*",
+      "source": "/svc/api/:path*",
       "destination": {
         "service": "backend"
       }

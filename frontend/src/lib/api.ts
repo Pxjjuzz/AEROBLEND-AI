@@ -1,5 +1,8 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-const HEALTH_BASE = process.env.NEXT_PUBLIC_HEALTH_URL || "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "/svc/api";
+
+const HEALTH_BASE =
+  process.env.NEXT_PUBLIC_HEALTH_URL || "/svc/api";
 const locationSearchCache = new Map<string, LocationChoice[]>();
 
 export type LocationChoice = {
